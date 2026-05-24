@@ -5,7 +5,7 @@ use rstest::rstest;
 #[test]
 fn test_du_flag_min_size() {
     let actual = nu!(cwd: "tests/fixtures/formats", "
-        du -m -1
+        du -m -1B
     ");
     assert!(
         actual
@@ -14,7 +14,7 @@ fn test_du_flag_min_size() {
     );
 
     let actual = nu!(cwd: "tests/fixtures/formats", "
-        du -m 1
+        du -m 1B
     ");
     assert!(actual.err.is_empty());
 }
@@ -101,12 +101,12 @@ fn du_with_multiple_path() {
 fn test_du_output_columns() {
     let actual = nu!(
         cwd: "tests/fixtures/formats",
-        "du -m 1 | columns | str join ','"
+        "du -m 1B | columns | str join ','"
     );
     assert_eq!(actual.out, "path,apparent,physical");
     let actual = nu!(
         cwd: "tests/fixtures/formats",
-        "du -m 1 -l | columns | str join ','"
+        "du -m 1B -l | columns | str join ','"
     );
     assert_eq!(actual.out, "path,apparent,physical,directories,files");
 }

@@ -1,7 +1,7 @@
 use crate::{DirBuilder, DirInfo, FileInfo};
 use nu_engine::command_prelude::*;
 use nu_glob::{MatchOptions, Pattern};
-use nu_protocol::{NuGlob, PipelineMetadata, Signals};
+use nu_protocol::{Filesize, NuGlob, PipelineMetadata, Signals};
 use serde::Deserialize;
 use std::path::Path;
 
@@ -18,7 +18,7 @@ pub struct DuArgs {
     #[serde(rename = "max-depth")]
     max_depth: Option<Spanned<i64>>,
     #[serde(rename = "min-size")]
-    min_size: Option<Spanned<i64>>,
+    min_size: Option<Spanned<Filesize>>,
 }
 
 impl Command for Du {
@@ -67,7 +67,7 @@ impl Command for Du {
             )
             .named(
                 "min-size",
-                SyntaxShape::Int,
+                SyntaxShape::Filesize,
                 "Exclude files below this size.",
                 Some('m'),
             )
@@ -83,7 +83,7 @@ impl Command for Du {
         _input: PipelineData,
     ) -> Result<PipelineData, ShellError> {
         let tag = call.head;
-        let min_size: Option<Spanned<i64>> = call.get_flag(engine_state, stack, "min-size")?;
+        let min_size: Option<Spanned<Filesize>> = call.get_flag(engine_state, stack, "min-size")?;
         let max_depth: Option<Spanned<i64>> = call.get_flag(engine_state, stack, "max-depth")?;
         if let Some(ref max_depth) = max_depth
             && max_depth.item < 0
@@ -93,7 +93,7 @@ impl Command for Du {
             });
         }
         if let Some(ref min_size) = min_size
-            && min_size.item < 0
+            && min_size.item.is_negative()
         {
             return Err(ShellError::NeedsPositiveValue {
                 span: min_size.span,
@@ -223,7 +223,7 @@ fn du_for_one_pattern(
     let deref = args.deref;
     let long = args.long;
     let max_depth = args.max_depth.map(|f| f.item as u64);
-    let min_size = args.min_size.map(|f| f.item as u64);
+    let min_size = args.min_size.map(|f| f.item.get() as u64);
 
     let params = DirBuilder {
         tag: span,
